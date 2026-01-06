@@ -2,9 +2,10 @@ import streamlit as st
 from model import load_model
 from predict import predict_image
 
-st.set_page_config(page_title="Görselde Yapay Zeka Analizi", layout="wide")
+st.set_page_config(page_title="Görselde Yapay Zeka Analizi", layout="wide") #Title
 
-st.sidebar.title("ℹ️ Proje Hakkında")
+#Sidebar Start
+st.sidebar.title("ℹ️ Proje Hakkında") 
 st.sidebar.write("""
 Bu sistem, yüklenen görsellerin  
 yapay zeka ile üretilip üretilmediğini  
@@ -20,8 +21,11 @@ st.sidebar.write("""
 - ResNet18  
 - Streamlit
 """)
+st.sidebar.markdown("---")
 
+#sidebar end
 
+#hero start
 st.markdown("""
 # 🧠 Yapay Zeka Görsel Analizi
 Yüklediğiniz görselin gerçek mi yapay mı olduğunu analiz eder.
@@ -48,7 +52,13 @@ if file:
 
 
 st.markdown("---")
+
+#hero end
+
+#footer start
 st.markdown(
     "👨‍💻 Geliştirici: **Arda24** | AI Image Detector © 2026",
     unsafe_allow_html=True
 )
+
+#footer end
