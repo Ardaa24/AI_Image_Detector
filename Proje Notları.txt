@@ -1,6 +1,82 @@
 Projede kullanılan model eğitme metotları:
-1️⃣ Denetimli Öğrenme (Supervised Learning)
+1️⃣ Denetimli Öğrenme (Supervised Learning): 
+real/ → 0
+ai/   → 1
+Ne istediğimizi biliyoruz
+“AI mi gerçek mi?” net bir soru
+Etiketli veri var
+
 2️⃣ Transfer Learning
+Modeli sıfırdan eğitmiyoruz.
+Bunun yerine:
+ImageNet’te eğitilmiş bir model alıyoruz
+Kendi problemimize uyarlıyoruz
+model = resnet18(pretrained=True)
+model.fc = nn.Linear(..., 2)
+Model zaten şunları biliyor:
+Kenar
+Doku
+Şekil
+Renk geçişleri
+Biz ona sadece şunu öğretiyoruz:
+“Bunlar AI’a benziyor, bunlar gerçeğe.”
+
 3️⃣ Mini-Batch Gradient Descent
+Model:
+Tek tek görsel ❌
+Tüm dataset ❌
+👉 32’lik gruplar halinde öğrenir.
+Neden?
+Daha stabil öğrenme
+Daha az bellek
+Daha hızlı
+
 4️⃣ Backpropagation (Geri Yayılım)
+Modelin en önemli öğrenme mekanizması.
+Adımlar:
+Tahmin yap
+Hata hesapla
+Hatanın hangi ağırlıktan geldiğini bul
+O ağırlıkları düzelt
+Kod karşılığı:
+loss.backward()
+
 5️⃣ Adam Optimizer + CrossEntropy Loss
+“Tahmin ile gerçek etiket arasındaki fark ne kadar?”
+criterion = nn.CrossEntropyLoss()
+Sınıflandırma için standart
+Softmax + log işlemlerini içerir
+
+Optimizer — Adam
+📌 Görevi:
+“Bu hatayı nasıl düzelteceğiz?”
+optimizer = optim.Adam(model.parameters(), lr=0.0001)
+Adam:
+Öğrenme hızını otomatik ayarlar
+Gürültülü datada çok iyi
+Başlangıç için en güvenlisi
+
+
+📌BU METOTLAR BİRLİKTE NASIL ÇALIŞIR?
+Kısaca:
+Görsel
+  ↓
+ResNet (Transfer Learning)
+  ↓
+Tahmin (AI / Real)
+  ↓
+CrossEntropyLoss (Hata)
+  ↓
+Backpropagation
+  ↓
+Adam (Ağırlıkları güncelle)
+  ↓
+Tekrar
+
+
+
+Model = Öğrenci
+Dataset = Ders kitabı
+Loss = Yanlış cevap
+Optimizer = Çalışma yöntemi
+Epoch = Deneme sınavı
