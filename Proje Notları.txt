@@ -1,0 +1,6 @@
+Projede kullanılan model eğitme metotları:
+1️⃣ Denetimli Öğrenme (Supervised Learning)
+2️⃣ Transfer Learning
+3️⃣ Mini-Batch Gradient Descent
+4️⃣ Backpropagation (Geri Yayılım)
+5️⃣ Adam Optimizer + CrossEntropy Loss
