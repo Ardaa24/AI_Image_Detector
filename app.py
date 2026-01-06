@@ -4,8 +4,23 @@ from predict import predict_image
 
 st.set_page_config(page_title="Görselde Yapay Zeka Analizi", layout="wide")
 
-st.sidebar.title("ℹ️ Proje Bilgisi")
-st.sidebar.write("AI ile üretilmiş görselleri tespit etmeyi amaçlar.")
+st.sidebar.title("ℹ️ Proje Hakkında")
+st.sidebar.write("""
+Bu sistem, yüklenen görsellerin  
+yapay zeka ile üretilip üretilmediğini  
+derin öğrenme kullanarak tahmin eder.
+""")
+
+st.sidebar.markdown("---")
+
+st.sidebar.subheader("🔧 Kullanılan Teknolojiler")
+st.sidebar.write("""
+- Python  
+- PyTorch  
+- ResNet18  
+- Streamlit
+""")
+
 
 st.markdown("""
 # 🧠 Yapay Zeka Görsel Analizi
