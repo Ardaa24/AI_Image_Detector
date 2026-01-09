@@ -3,15 +3,15 @@ from torch import nn, optim
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
 
-# =============================
-# 1️⃣ Cihaz seçimi (CPU / GPU)
-# =============================
+
+# Cihaz seçimi (CPU / GPU)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Kullanılan cihaz:", device)
 
-# =============================
-# 2️⃣ Görsel dönüşümleri
-# =============================
+
+# Görsel dönüşümleri
+
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -21,38 +21,38 @@ transform = transforms.Compose([
     )
 ])
 
-# =============================
-# 3️⃣ Dataset yükleme
-# =============================
+
+# Dataset yükleme
+
 train_dataset = datasets.ImageFolder("dataset/train", transform=transform)
 val_dataset   = datasets.ImageFolder("dataset/val", transform=transform)
 
 print("Sınıf isimleri:", train_dataset.classes)
 
-# =============================
-# 4️⃣ DataLoader
-# =============================
+
+#  DataLoader
+
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 val_loader   = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-# =============================
-# 5️⃣ Model (ResNet18)
-# =============================
-model = models.resnet18(pretrained=True)
 
-# Son katmanı değiştiriyoruz (2 sınıf: ai / real)
+# Model (ResNet18)
+
+from torchvision.models import ResNet18_Weights
+
+model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 2)
 model = model.to(device)
 
-# =============================
-# 6️⃣ Kayıp fonksiyonu & optimizer
-# =============================
+
+# Kayıp fonksiyonu & optimizer
+
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-# =============================
-# 7️⃣ Eğitim döngüsü
-# =============================
+
+#  Eğitim döngüsü
+
 epochs = 5
 
 for epoch in range(epochs):
@@ -73,9 +73,9 @@ for epoch in range(epochs):
 
     avg_loss = total_loss / len(train_loader)
 
-    # =============================
+    
     # Validation
-    # =============================
+    
     model.eval()
     correct = 0
     total = 0
@@ -97,8 +97,6 @@ for epoch in range(epochs):
           f"Loss: {avg_loss:.4f} "
           f"Val Accuracy: {accuracy:.2f}%")
 
-# =============================
-# 8️⃣ Modeli kaydet
-# =============================
+# Modeli kaydet
 torch.save(model.state_dict(), "ai_image_detector.pth")
 print("Model kaydedildi.")
