@@ -12,7 +12,30 @@ print("Kullanılan cihaz:", device)
 
 # Görsel dönüşümleri
 
-transform = transforms.Compose([
+# =============================
+# TRAIN TRANSFORM (AUGMENTATION VAR)
+# =============================
+train_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomRotation(15),
+    transforms.ColorJitter(
+        brightness=0.2,
+        contrast=0.2,
+        saturation=0.2,
+        hue=0.05
+    ),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
+
+# =============================
+# VAL TRANSFORM (SADECE STANDARD)
+# =============================
+val_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(
@@ -24,8 +47,16 @@ transform = transforms.Compose([
 
 # Dataset yükleme
 
-train_dataset = datasets.ImageFolder("dataset/train", transform=transform)
-val_dataset   = datasets.ImageFolder("dataset/val", transform=transform)
+train_dataset = datasets.ImageFolder(
+    "dataset/train",
+    transform=train_transform
+)
+
+val_dataset = datasets.ImageFolder(
+    "dataset/val",
+    transform=val_transform
+)
+
 
 print("Sınıf isimleri:", train_dataset.classes)
 
