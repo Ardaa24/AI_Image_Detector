@@ -4,14 +4,14 @@ from torchvision import transforms, models
 from PIL import Image
 import sys
 
-# =============================
-# 1️⃣ Cihaz seçimi
-# =============================
+
+#  Cihaz seçimi
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# =============================
-# 2️⃣ Transform (train ile AYNI)
-# =============================
+
+# Transform 
+
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -21,9 +21,9 @@ transform = transforms.Compose([
     )
 ])
 
-# =============================
-# 3️⃣ Modeli yükle
-# =============================
+
+#  Modeli yükle
+
 model = models.resnet18(weights=None)
 model.fc = nn.Linear(model.fc.in_features, 2)
 
@@ -31,9 +31,9 @@ model.load_state_dict(torch.load("ai_image_detector.pth", map_location=device))
 model = model.to(device)
 model.eval()
 
-# =============================
-# 4️⃣ Görsel yükleme
-# =============================
+
+#  Görsel yükleme
+
 if len(sys.argv) < 2:
     print("Kullanım: python predict.py <gorsel_yolu>")
     sys.exit()
@@ -42,9 +42,9 @@ image_path = sys.argv[1]
 image = Image.open(image_path).convert("RGB")
 image = transform(image).unsqueeze(0).to(device)
 
-# =============================
-# 5️⃣ Tahmin
-# =============================
+
+#  Tahmin
+
 with torch.no_grad():
     outputs = model(image)
     probs = torch.softmax(outputs, dim=1)
