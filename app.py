@@ -97,7 +97,6 @@ if file is not None:
                 cam = generate_gradcam(model, face, device)
                 st.image(cam, caption="Grad-CAM (Modelin Baktığı Yer)", use_container_width=True)
 
-# ----------------- Footer -----------------
 # ---------- Footer ----------
 st.markdown("---")
 st.markdown(
