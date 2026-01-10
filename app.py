@@ -71,16 +71,28 @@ if file:
     st.markdown("---")
 
     # ---------- Grad-CAM ----------
-    st.subheader("🔥 Model Nereye Baktı? (Grad-CAM)")
+from face_utils import extract_faces
+from gradcam_utilitys import generate_gradcam
 
-    with st.spinner("Grad-CAM oluşturuluyor..."):
-        cam_image = generate_gradcam(image)
+st.markdown("## 🧑‍🦱 Yüz Odaklı Deepfake Analizi")
 
-    st.image(
-        cam_image,
-        caption="Kırmızı alanlar modelin karar verirken en çok odaklandığı bölgeler",
-        use_container_width=True
-    )
+faces = extract_faces(image)
+
+if not faces:
+    st.warning("Yüz tespit edilemedi.")
+else:
+    for i, face in enumerate(faces):
+        st.markdown(f"### Yüz {i+1}")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.image(face, caption="Tespit Edilen Yüz", use_container_width=True)
+
+        with col2:
+            cam_face = generate_gradcam(face)
+            st.image(cam_face, caption="Deepfake Grad-CAM", use_container_width=True)
+
 
 # ---------- Footer ----------
 st.markdown("---")
