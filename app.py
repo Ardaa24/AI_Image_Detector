@@ -74,7 +74,7 @@ if file:
     st.subheader("🔥 Model Nereye Baktı? (Grad-CAM)")
 
     with st.spinner("Grad-CAM oluşturuluyor..."):
-        cam_image = generate_gradcam(model, image, device)
+        cam_image = generate_gradcam(image)
 
     st.image(
         cam_image,
