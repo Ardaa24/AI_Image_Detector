@@ -1,56 +1,50 @@
 import torch
-from torch import nn
-from torchvision import transforms, models
+import torch.nn.functional as F
+from torchvision import transforms
 from PIL import Image
 import sys
 
-
-#  Cihaz seçimi
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-# Transform 
-
+# ---------- Transform ----------
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
     )
 ])
 
+# ---------- Streamlit için ----------
+def predict_image(model, image_file):
+    image = Image.open(image_file).convert("RGB")
+    x = transform(image).unsqueeze(0)
 
-#  Modeli yükle
+    with torch.no_grad():
+        outputs = model(x)
+        probs = F.softmax(outputs, dim=1)[0]
 
-model = models.resnet18(weights=None)
-model.fc = nn.Linear(model.fc.in_features, 2)
+    real = probs[1].item()
+    ai = probs[0].item()
 
-model.load_state_dict(torch.load("ai_image_detector.pth", map_location=device))
-model = model.to(device)
-model.eval()
-
-
-#  Görsel yükleme
-
-if len(sys.argv) < 2:
-    print("Kullanım: python predict.py <gorsel_yolu>")
-    sys.exit()
-
-image_path = sys.argv[1]
-image = Image.open(image_path).convert("RGB")
-image = transform(image).unsqueeze(0).to(device)
+    return real, ai
 
 
-#  Tahmin
+# ---------- CLI için ----------
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Kullanım: python predict.py <gorsel_yolu>")
+        exit()
 
-with torch.no_grad():
-    outputs = model(image)
-    probs = torch.softmax(outputs, dim=1)
-    confidence, predicted = torch.max(probs, 1)
+    from model import load_model
 
-class_names = ["AI Generated", "Real Photo"]
+    model = load_model()
+    image_path = sys.argv[1]
 
-print(f"Tahmin: {class_names[predicted.item()]}")
-print(f"Güven Oranı: %{confidence.item() * 100:.2f}")
+    real, ai = predict_image(model, image_path)
+
+    if ai > real:
+        print("Tahmin: AI Generated")
+        print(f"Güven Oranı: %{ai*100:.2f}")
+    else:
+        print("Tahmin: Real Photo")
+        print(f"Güven Oranı: %{real*100:.2f}")
