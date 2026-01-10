@@ -1,6 +1,6 @@
 import streamlit as st
 from model import load_model
-from predict import ai_image_detector
+from predict import predict_image
 from gradcam_utilitys import generate_gradcam
 from PIL import Image
 import torch
@@ -55,7 +55,7 @@ if file:
     with col_img:
         st.image(image, caption="Yüklenen Görsel", use_container_width=True)
 
-    real, ai = ai_image_detector(model, file)
+    real, ai = predict_image(model, file)
 
     with col_info:
         st.metric("🧑 Gerçek", f"%{real*100:.2f}")
