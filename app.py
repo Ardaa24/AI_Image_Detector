@@ -85,6 +85,6 @@ if file:
 # ---------- Footer ----------
 st.markdown("---")
 st.markdown(
-    "👨‍💻 Geliştirici: **Arda24** | AI Image Detector © 2026",
+    "👨‍💻 Geliştirici: **[Arda24](https://github.com/ardaa24)** | AI Image Detector © 2026",
     unsafe_allow_html=True
 )
