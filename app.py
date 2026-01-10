@@ -77,26 +77,74 @@ if file is not None:
 
     st.markdown("---")
 
-    # ---------- Face-based Grad-CAM ----------
-    st.markdown("## 🧑‍🦱 Yüz Odaklı Deepfake Analizi")
+    # ---------- Gerekli Ek Kütüphaneler ----------
+from torchvision import transforms
+import torch.nn.functional as F
 
-    faces = extract_faces(cv_image)
+# Model için görüntü işleme ayarları (Yüz tahmini için gerekli)
+face_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
 
-    if len(faces) == 0:
-        st.warning("Yüz tespit edilemedi.")
-    else:
-        for i, face in enumerate(faces):
-            st.markdown(f"### Yüz {i+1}")
+# ---------- Grad-CAM ve Yüz Analizi ----------
+from face_utils import extract_faces
+# Eğer önceki adımda gradcam fonksiyonunu güncellediysen (model, image, device) parametreleriyle çağır
+# Güncellemediysen eski haliyle (sadece image) kalabilir. Aşağıdaki kod en güncel halidir:
+from gradcam_utilitys import generate_gradcam
 
-            col1, col2 = st.columns(2)
+st.markdown("## 🧑‍🦱 Yüz Odaklı Deepfake Analizi")
 
-            with col1:
-                st.image(face, caption="Tespit Edilen Yüz", use_container_width=True)
+# Yüzleri bul
+faces = extract_faces(cv_image)
 
-            with col2:
-                cam = generate_gradcam(model, face, device)
-                st.image(cam, caption="Grad-CAM (Modelin Baktığı Yer)", use_container_width=True)
+if not faces:
+    st.warning("Görselde yüz tespit edilemedi.")
+else:
+    for i, face in enumerate(faces):
+        st.markdown(f"### 👤 Yüz {i+1} Analizi")
 
+        col1, col2 = st.columns(2)
+
+        # 1. Sütun: Yüz ve Tahmin
+        with col1:
+            st.image(face, caption="Tespit Edilen Yüz", use_container_width=True)
+            
+            # --- YÜZ TAHMİNİ BAŞLANGIÇ ---
+            # Yüzü modele uygun hale getir
+            face_tensor = face_transform(face).unsqueeze(0).to(device)
+            
+            # Tahmin yap
+            with torch.no_grad():
+                output = model(face_tensor)
+                probs = F.softmax(output, dim=1)
+                
+                # Sınıf 0: Gerçek, Sınıf 1: AI (Eğitim sırasına göre değişebilir, senin projende genelde böyledir)
+                real_score = probs[0][0].item()
+                ai_score = probs[0][1].item()
+
+            # Sonucu Yazdır
+            if ai_score > 0.5:
+                st.error(f"🚨 **DEEPFAKE TESPİT EDİLDİ**\n\nOran: %{ai_score*100:.2f} Yapay Zeka")
+            else:
+                st.success(f"✅ **GERÇEK YÜZ**\n\nOran: %{real_score*100:.2f} Orijinal")
+            # --- YÜZ TAHMİNİ BİTİŞ ---
+
+        # 2. Sütun: Grad-CAM (Nereye Odaklandı?)
+        with col2:
+            # Önceki adımda gradcam kodunu güncellediysen bu satırı kullan:
+            cam_face = generate_gradcam(model, face, device)
+            
+            # Eğer gradcam kodunu güncellemediysen eski hali: cam_face = generate_gradcam(face)
+            
+            st.image(cam_face, caption="Modelin Odaklandığı Bölge (Isı Haritası)", use_container_width=True)
+            st.info("Kırmızı alanlar, modelin 'sahte' veya 'gerçek' kararı verirken en çok şüphelendiği bölgelerdir.")
+
+        st.divider() # Araya çizgi çek
 
 # ---------- Footer ----------
 st.markdown("---")
