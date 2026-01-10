@@ -121,9 +121,9 @@ if file:
 
                     # Sonucu Yazdır
                     if ai_score > 0.5:
-                        st.error(f"🚨 **DEEPFAKE TESPİT EDİLDİ**\n\nOran: %{ai_score*100:.2f} Yapay Zeka")
+                        st.error(f"🚨 **DEEPFAKE TESPİT EDİLDİ.**\n\nOran: %{ai_score*100:.2f} Yapay Zeka")
                     else:
-                        st.success(f"✅ **GERÇEK YÜZ**\n\nOran: %{real_score*100:.2f} Orijinal")
+                        st.success(f"✅ **DEEPFAKE TESPİT EDİLMEDİ.**\n\nOran: %{real_score*100:.2f} Orijinal")
                 
                 except Exception as e:
                     st.error(f"Tahmin hatası: {e}")
