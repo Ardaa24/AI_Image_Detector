@@ -1,133 +1,108 @@
 import torch
-from torch import nn, optim
+import torch.nn as nn
+import torch.optim as optim
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
+import copy
 
-
-# Cihaz seçimi (CPU / GPU)
-
+# 1. Cihaz Ayarı
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Kullanılan cihaz:", device)
+print(f"🚀 Kullanılan Cihaz: {device}")
 
-
-# Görsel dönüşümleri
-
-# =============================
-# TRAIN TRANSFORM (AUGMENTATION VAR)
-# =============================
+# 2. Transformlar (Veri Çoğaltma)
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomRotation(15),
-    transforms.ColorJitter(
-        brightness=0.2,
-        contrast=0.2,
-        saturation=0.2,
-        hue=0.05
-    ),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(10),
+    transforms.ColorJitter(brightness=0.1, contrast=0.1),
     transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    )
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# =============================
-# VAL TRANSFORM (SADECE STANDARD)
-# =============================
 val_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    )
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
+# 3. Dataset Yükleme
+train_dataset = datasets.ImageFolder("dataset/train", transform=train_transform)
+val_dataset = datasets.ImageFolder("dataset/val", transform=val_transform)
 
-# Dataset yükleme
+# --- KRİTİK KONTROL ---
+print(f"📂 Sınıf Haritası: {train_dataset.class_to_idx}")
+# Çıktıda {'0_real': 0, '1_fake': 1} görmelisin. 
+# Eğer {'fake': 0, 'real': 1} görüyorsan klasör adlarını değiştir!
 
-train_dataset = datasets.ImageFolder(
-    "dataset/train",
-    transform=train_transform
-)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-val_dataset = datasets.ImageFolder(
-    "dataset/val",
-    transform=val_transform
-)
-
-
-print("Sınıf isimleri:", train_dataset.classes)
-
-
-#  DataLoader
-
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_loader   = DataLoader(val_dataset, batch_size=16, shuffle=False)
-
-
-# Model (ResNet18)
-
-from torchvision.models import ResNet18_Weights
-
-model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
-model.fc = nn.Linear(model.fc.in_features, 2)
+# 4. Model Kurulumu
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+num_ftrs = model.fc.in_features
+model.fc = nn.Linear(num_ftrs, 2)
 model = model.to(device)
 
-
-# Kayıp fonksiyonu & optimizer
-
+# 5. Ayarlar
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+# Learning rate düşürüldü (daha hassas öğrenme için)
+optimizer = optim.Adam(model.parameters(), lr=0.00005) 
 
+epochs = 15 # Epoch artırıldı
+best_acc = 0.0
+best_model_wts = copy.deepcopy(model.state_dict())
 
-#  Eğitim döngüsü
-
-epochs = 5
-
+# 6. Eğitim Döngüsü
 for epoch in range(epochs):
-    model.train()
-    total_loss = 0
+    print(f"\nEpoch {epoch+1}/{epochs}")
+    print("-" * 10)
 
-    for images, labels in train_loader:
-        images = images.to(device)
-        labels = labels.to(device)
+    # --- TRAIN ---
+    model.train()
+    running_loss = 0.0
+    correct_train = 0
+    total_train = 0
+
+    for inputs, labels in train_loader:
+        inputs, labels = inputs.to(device), labels.to(device)
 
         optimizer.zero_grad()
-        outputs = model(images)
+        outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
 
-        total_loss += loss.item()
+        running_loss += loss.item() * inputs.size(0)
+        _, preds = torch.max(outputs, 1)
+        correct_train += torch.sum(preds == labels.data)
+        total_train += labels.size(0)
 
-    avg_loss = total_loss / len(train_loader)
+    epoch_loss = running_loss / len(train_dataset)
+    epoch_acc = correct_train.double() / total_train
+    print(f"Train Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}")
 
-    
-    # Validation
-    
+    # --- VALIDATION ---
     model.eval()
-    correct = 0
-    total = 0
-
+    running_corrects = 0
+    
     with torch.no_grad():
-        for images, labels in val_loader:
-            images = images.to(device)
-            labels = labels.to(device)
+        for inputs, labels in val_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            running_corrects += torch.sum(preds == labels.data)
 
-            outputs = model(images)
-            _, predicted = torch.max(outputs, 1)
+    val_acc = running_corrects.double() / len(val_dataset)
+    print(f"Val Acc: {val_acc:.4f}")
 
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+    # En iyi modeli hafızada tut
+    if val_acc > best_acc:
+        best_acc = val_acc
+        best_model_wts = copy.deepcopy(model.state_dict())
+        print("⭐ Yeni en iyi model bulundu!")
 
-    accuracy = 100 * correct / total
-
-    print(f"Epoch [{epoch+1}/{epochs}] "
-          f"Loss: {avg_loss:.4f} "
-          f"Val Accuracy: {accuracy:.2f}%")
-
-# Modeli kaydet
+# 7. En İyi Modeli Kaydet
+print(f"\nEn yüksek Validation Accuracy: {best_acc:.4f}")
+model.load_state_dict(best_model_wts)
 torch.save(model.state_dict(), "ai_image_detector.pth")
-print("Model kaydedildi.")
+print("✅ En başarılı model 'ai_image_detector.pth' olarak kaydedildi.")
